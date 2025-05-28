@@ -1,0 +1,24 @@
+[1/10] Performing build step for 'bootloader'
+[1/1] cd /home/raul/esp/http_server_simple/build/bootloader/esp-idf/esptool_py && /home/raul/.espressif/python_env/idf5.4_py3.13_env/bin/python /home/raul/esp/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x0 /home/raul/esp/http_server_simple/build/bootloader/bootloader.bin
+Bootloader binary size 0x5160 bytes. 0x2ea0 bytes (36%) free.
+[2/10] No install step for 'bootloader'
+[3/10] Completed 'bootloader'
+[4/10] Building C object esp-idf/main/CMakeFiles/__idf_main.dir/main.c.obj
+/home/raul/esp/http_server_simple/main/main.c:303:13: warning: 'connect_handler' defined but not used [-Wunused-function]
+  303 | static void connect_handler(void* arg, esp_event_base_t event_base,
+      |             ^~~~~~~~~~~~~~~
+/home/raul/esp/http_server_simple/main/main.c:289:13: warning: 'disconnect_handler' defined but not used [-Wunused-function]
+  289 | static void disconnect_handler(void* arg, esp_event_base_t event_base,
+      |             ^~~~~~~~~~~~~~~~~~
+[5/10] Linking C static library esp-idf/main/libmain.a
+[6/10] Generating ld/sections.ld
+[7/10] Building C object CMakeFiles/simple.elf.dir/project_elf_src_esp32c3.c.obj
+[8/10] Linking CXX executable simple.elf
+[9/10] Generating binary image from built executable
+esptool.py v4.8.1
+Creating esp32c3 image...
+Merged 1 ELF section
+Successfully created esp32c3 image.
+Generated /home/raul/esp/http_server_simple/build/simple.bin
+[10/10] cd /home/raul/esp/http_server_simple/build/esp-idf/esptool_py && /home/raul/.espressif/python_env/idf5.4_py3.13_env/bin/python /home/raul/esp/esp-idf/components/partition_table/check_sizes.py --offset 0x8000 partition --type app /home/raul/esp/http_server_simple/build/partition_table/partition-table.bin /home/raul/esp/http_server_simple/build/simple.bin
+simple.bin binary size 0xd4070 bytes. Smallest app partition is 0x100000 bytes. 0x2bf90 bytes (17%) free.

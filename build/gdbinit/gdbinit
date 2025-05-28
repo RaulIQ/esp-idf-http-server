@@ -1,0 +1,2 @@
+source /home/raul/esp/http_server_simple/build/gdbinit/symbols
+source /home/raul/esp/http_server_simple/build/gdbinit/connect
