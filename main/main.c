@@ -23,6 +23,7 @@
 #include "esp_tls.h"
 #include "esp_check.h"
 #include "led_strip.h"
+#include "esp_spiffs.h"
 
 #if !CONFIG_IDF_TARGET_LINUX
 #include <esp_wifi.h>
@@ -180,9 +181,27 @@ static const httpd_uri_t hello = {
 static esp_err_t root_get_handler(httpd_req_t *req)
 {
     httpd_resp_set_type(req, "text/html");
-    char html_response[] = "<!DOCTYPE html><html><head><title>Hello</title></head>"
-                                    "<body><h1>Wellcome!</h1></body></html>";
-    httpd_resp_send(req, html_response, HTTPD_RESP_USE_STRLEN);
+
+    FILE* f = fopen("/www/index.html", "r");
+    if (f == NULL) {
+        ESP_LOGE(TAG, "Failed to open file");
+        httpd_resp_send_500(req);
+        return ESP_FAIL;
+    }
+
+    char buffer[256];
+    while (fgets(buffer, sizeof(buffer), f)) {
+        if (strstr(buffer, "{{NAME}}")) {
+            const char *name = "Masha";
+            httpd_resp_send_chunk(req, name, strlen(name));
+        } else {
+            httpd_resp_send_chunk(req, buffer, strlen(buffer));
+        }
+    }
+    fclose(f);
+
+    httpd_resp_send_chunk(req, NULL, 0);
+
     return ESP_OK;
 }
 
@@ -195,6 +214,13 @@ static const httpd_uri_t root = {
 
 static esp_err_t light_control_handler(httpd_req_t *req)
 {
+    FILE* f = fopen("/www/light_control.html", "r");
+    if (f == NULL) {
+        ESP_LOGE(TAG, "Failed to open file");
+        httpd_resp_send_500(req);
+        return ESP_FAIL;
+    }
+
     if (req->method == HTTP_POST) {
         s_led_state = !s_led_state;
         blink_led();
@@ -204,12 +230,21 @@ static esp_err_t light_control_handler(httpd_req_t *req)
         httpd_resp_send(req, NULL, 0);
         return ESP_OK;
     } else {  // HTTP_GET
-        char html[512];
-        snprintf(html, sizeof(html), "<html><body><h1>Light Control</h1><p>Current state: %s</p><form method=\"POST\" action=\"/light\"><button type=\"submit\">%s</button></form></body></html>",
-                s_led_state ? "On" : "Off",
-                s_led_state ? "Turn Off" : "Turn On");
-        httpd_resp_set_type(req, "text/html");
-        httpd_resp_send(req, html, HTTPD_RESP_USE_STRLEN);
+        char buffer[256];
+        while (fgets(buffer, sizeof(buffer), f)) {
+            if (strstr(buffer, "{{STATE}}")) {
+                const char *state = s_led_state ? "On" : "Off";
+                httpd_resp_send_chunk(req, state, strlen(state));
+            } else if (strstr(buffer, "{{BUTTON_TEXT}}")) {
+                const char *button_text = s_led_state ? "Turn Off" : "Turn On";
+                httpd_resp_send_chunk(req, button_text, strlen(button_text)); 
+            } else {
+                httpd_resp_send_chunk(req, buffer, strlen(buffer));
+            }
+        }
+        fclose(f);
+
+        httpd_resp_send_chunk(req, NULL, 0);
         return ESP_OK;
     }
 }
@@ -311,6 +346,37 @@ static void connect_handler(void* arg, esp_event_base_t event_base,
 }
 #endif // !CONFIG_IDF_TARGET_LINUX
 
+esp_err_t init_fs(void)
+{
+    esp_vfs_spiffs_conf_t conf = {
+        .base_path = "/www",
+        .partition_label = NULL,
+        .max_files = 5,
+        .format_if_mount_failed = false
+    };
+    esp_err_t ret = esp_vfs_spiffs_register(&conf);
+
+    if (ret != ESP_OK) {
+        if (ret == ESP_FAIL) {
+            ESP_LOGE(TAG, "Failed to mount or format filesystem");
+        } else if (ret == ESP_ERR_NOT_FOUND) {
+            ESP_LOGE(TAG, "Failed to find SPIFFS partition");
+        } else {
+            ESP_LOGE(TAG, "Failed to initialize SPIFFS (%s)", esp_err_to_name(ret));
+        }
+        return ESP_FAIL;
+    }
+
+    size_t total = 0, used = 0;
+    ret = esp_spiffs_info(NULL, &total, &used);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to get SPIFFS partition information (%s)", esp_err_to_name(ret));
+    } else {
+        ESP_LOGI(TAG, "Partition size: total: %d, used: %d", total, used);
+    }
+    return ESP_OK;
+}
+
 void app_main(void)
 {
     static httpd_handle_t server = NULL;
@@ -325,7 +391,7 @@ void app_main(void)
      * examples/protocols/README.md for more information about this function.
      */
     ESP_ERROR_CHECK(example_connect());
-
+    ESP_ERROR_CHECK(init_fs());
     /* Register event handlers to stop the server when Wi-Fi or Ethernet is disconnected,
      * and re-start it upon connection.
      */

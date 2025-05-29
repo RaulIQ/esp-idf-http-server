@@ -7,3 +7,5 @@ endif()
 idf_component_register(SRCS "main.c"
                     INCLUDE_DIRS "."
                     REQUIRES ${requires})
+
+spiffs_create_partition_image(www ../front FLASH_IN_PROJECT)
