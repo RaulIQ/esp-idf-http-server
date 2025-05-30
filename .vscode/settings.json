@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "esp_tls.h": "c",
-        "esp_tls_crypto.h": "c"
+        "esp_tls_crypto.h": "c",
+        "random": "c"
     }
 }

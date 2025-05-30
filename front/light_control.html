@@ -6,10 +6,27 @@
     <title>Document</title>
 </head>
 <body>
-    <h1>Light Control</h1>
+    <h1>RGB Light Control</h1>
+    <form action="/set_rgb" method="POST">
+        <label>
+            R: <input type="range" name="r" min="0" max="255" value="{{R}}">
+            {{R}}
+        </label><br>
+        <label>
+            G: <input type="range" name="g" min="0" max="255" value="{{G}}">
+            {{G}}
+        </label><br>
+        <label>
+            B: <input type="range" name="b" min="0" max="255" value="{{B}}">
+            {{B}}
+        </label><br><br>
+        <button type="submit">Apply</button>
+    </form>
+
     <p>Current state: 
         {{STATE}}
     </p>
+
     <form method="POST" action="/light">
         <button type="submit">
             {{BUTTON_TEXT}}
